@@ -1,23 +1,45 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { templates } from '@/lib/templates'
 import { ComponentTree } from '@/components/builder/component-tree'
 import { PropertiesPanel } from '@/components/builder/properties-panel'
 import { PreviewControls } from '@/components/builder/preview-controls'
+import { PreviewArea } from '@/components/builder/preview-area'
 import { PageSidebar } from '@/components/builder/page-sidebar'
-import * as TemplateComponents from '@/components/builder/template-components'
 import { notFound } from 'next/navigation'
-import { cn } from '@/lib/utils'
-import React from 'react'
+
+type ComponentData = {
+  id: string;
+  type: string;
+  isVisible: boolean;
+  children?: ComponentData[];
+  props: Record<string, any>;
+}
+
+// Helper function to find a component by ID in the nested structure
+const findComponentById = (components: ComponentData[], id: string): ComponentData | null => {
+  for (const component of components) {
+    if (component.id === id) {
+      return component;
+    }
+    if (component.children) {
+      const found = findComponentById(component.children, id);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+};
 
 export default function BuilderPage({
-  params: paramsPromise
+  params
 }: {
   params: Promise<{ templateId: string }>
 }) {
-  const params = React.use(paramsPromise)
-  const template = templates[params.templateId]
+  const resolvedParams = React.use(params)
+  const template = templates[resolvedParams.templateId]
 
   if (!template) {
     notFound()
@@ -27,44 +49,64 @@ export default function BuilderPage({
   const [isSidebarsVisible, setIsSidebarsVisible] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop')
+  const [components, setComponents] = useState(template.pages[0].components)
 
-  // Keep track of components for each page
-  const [pagesComponents, setPagesComponents] = useState(() => {
-    return template.pages.reduce((acc, page) => ({
-      ...acc,
-      [page.id]: page.components
-    }), {})
-  })
-
-  // Get current page's components
-  const components = pagesComponents[currentPageId] || []
-  const selectedComponent = components.find(c => c.id === selectedId) || null
-
-  // Update components when page changes
   useEffect(() => {
-    setSelectedId(null)
-  }, [currentPageId])
+    const currentPage = template.pages.find(page => page.id === currentPageId)
+    if (currentPage) {
+      setComponents(currentPage.components)
+      setSelectedId(null)
+    }
+  }, [currentPageId, template.pages])
+
+  const handlePageChange = (newPageId: string) => {
+    setCurrentPageId(newPageId)
+  }
 
   const handleToggleVisibility = (id: string) => {
-    setPagesComponents(prev => ({
-      ...prev,
-      [currentPageId]: prev[currentPageId].map(component =>
-        component.id === id
-          ? { ...component, isVisible: !component.isVisible }
-          : component
-      )
-    }))
+    setComponents(prevComponents => toggleComponentVisibility(prevComponents, id))
+  }
+
+  const toggleComponentVisibility = (components: ComponentData[], id: string): ComponentData[] => {
+    return components.map(component => {
+      if (component.id === id) {
+        return { ...component, isVisible: !component.isVisible }
+      }
+      if (component.children) {
+        return { ...component, children: toggleComponentVisibility(component.children, id) }
+      }
+      return component
+    })
   }
 
   const handleUpdateProps = (newProps: Record<string, any>) => {
-    setPagesComponents(prev => ({
-      ...prev,
-      [currentPageId]: prev[currentPageId].map(component =>
-        component.id === selectedId
-          ? { ...component, props: newProps }
-          : component
-      )
-    }))
+    if (!selectedId) return;
+
+    setComponents(prevComponents => {
+      const updateProps = (components: ComponentData[]): ComponentData[] => {
+        return components.map(component => {
+          if (component.id === selectedId) {
+            return {
+              ...component,
+              props: { ...component.props, ...newProps }
+            };
+          }
+          if (component.children) {
+            return {
+              ...component,
+              children: updateProps(component.children)
+            };
+          }
+          return component;
+        });
+      };
+
+      return updateProps(prevComponents);
+    });
+  }
+
+  const handleSelectComponent = (id: string) => {
+    setSelectedId(id);
   }
 
   return (
@@ -74,20 +116,20 @@ export default function BuilderPage({
           <PageSidebar
             pages={template.pages}
             currentPageId={currentPageId}
-            onPageChange={setCurrentPageId}
+            onPageChange={handlePageChange}
           />
           <div className="flex-1 overflow-y-auto">
             <ComponentTree
               components={components}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={handleSelectComponent}
               onToggleVisibility={handleToggleVisibility}
             />
           </div>
         </div>
       )}
 
-      <div className="flex-1 h-full overflow-y-auto bg-gray-50 relative">
+      <div className="flex-1 h-full relative">
         <PreviewControls
           onToggleSidebars={() => setIsSidebarsVisible(!isSidebarsVisible)}
           isSidebarsVisible={isSidebarsVisible}
@@ -95,38 +137,20 @@ export default function BuilderPage({
           onViewModeChange={setViewMode}
         />
 
-        <div
-          className={cn(
-            "mx-auto bg-white min-h-full transition-all duration-300",
-            viewMode === 'mobile' ? 'max-w-md' : 'max-w-6xl'
-          )}
-        >
-          {components
-            .filter(component => component.isVisible)
-            .map(component => {
-              const Component = (TemplateComponents as any)[
-                component.type.charAt(0).toUpperCase() + component.type.slice(1)
-              ]
-              return Component ? (
-                <div
-                  key={component.id}
-                  className={cn(
-                    "relative",
-                    selectedId === component.id && "ring-2 ring-primary ring-offset-2"
-                  )}
-                  onClick={() => setSelectedId(component.id)}
-                >
-                  <Component {...component.props} />
-                </div>
-              ) : null
-            })}
-        </div>
+        <PreviewArea
+          components={components}
+          selectedId={selectedId}
+          onSelectComponent={handleSelectComponent}
+          viewMode={viewMode}
+        />
       </div>
 
-      {isSidebarsVisible && (
+      {isSidebarsVisible && selectedId && (
         <PropertiesPanel
-          selectedComponent={selectedComponent}
+          components={components}
+          selectedId={selectedId}
           onUpdateProps={handleUpdateProps}
+          onToggleVisibility={handleToggleVisibility}
         />
       )}
     </div>

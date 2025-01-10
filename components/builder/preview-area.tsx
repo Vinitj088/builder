@@ -1,48 +1,58 @@
 'use client'
 
-import { Monitor, Smartphone, Maximize2, Minimize2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import * as TemplateComponents from '@/components/builder/template-components'
+import { cn } from "@/lib/utils"
 
-export function PreviewControls({
-  onToggleSidebars,
-  isSidebarsVisible,
-}: {
-  onToggleSidebars: () => void
-  isSidebarsVisible: boolean
-}) {
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop')
+interface ComponentData {
+  id: string;
+  type: string;
+  isVisible: boolean;
+  props: Record<string, any>;
+  children?: ComponentData[];
+}
+
+interface PreviewAreaProps {
+  components: ComponentData[]
+  selectedId: string | null
+  onSelectComponent: (id: string) => void
+  viewMode: 'desktop' | 'mobile'
+}
+
+export function PreviewArea({ components, selectedId, onSelectComponent, viewMode }: PreviewAreaProps) {
+  const renderComponent = (component: ComponentData) => {
+    if (!component.isVisible) return null;
+
+    const Component = (TemplateComponents as any)[component.type];
+    if (!Component) return null;
+
+    const childComponents = component.children?.map(renderComponent);
+
+    return (
+      <div
+        key={component.id}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectComponent(component.id);
+        }}
+        className={cn(
+          "relative",
+          selectedId === component.id && "outline outline-2 outline-blue-500"
+        )}
+      >
+        <Component {...component.props}>
+          {childComponents}
+        </Component>
+      </div>
+    );
+  };
 
   return (
-    <div className="absolute top-4 right-4 flex items-center gap-2 bg-white rounded-lg shadow p-2">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setViewMode('desktop')}
-        className={viewMode === 'desktop' ? 'bg-muted' : ''}
-      >
-        <Monitor className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setViewMode('mobile')}
-        className={viewMode === 'mobile' ? 'bg-muted' : ''}
-      >
-        <Smartphone className="h-4 w-4" />
-      </Button>
-      <div className="w-px h-4 bg-border" />
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onToggleSidebars}
-      >
-        {isSidebarsVisible ? (
-          <Maximize2 className="h-4 w-4" />
-        ) : (
-          <Minimize2 className="h-4 w-4" />
-        )}
-      </Button>
+    <div className={cn(
+      "h-full overflow-y-auto bg-white",
+      viewMode === 'mobile' ? 'max-w-md mx-auto' : ''
+    )}>
+      {components.map(renderComponent)}
     </div>
-  )
+  );
 }
+

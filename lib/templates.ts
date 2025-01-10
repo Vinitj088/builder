@@ -1,58 +1,169 @@
-export const templates: Record<string, Template> = {
-  portfolio: {
-    id: 'portfolio',
-    name: 'Portfolio Template',
+import { v4 as uuidv4 } from 'uuid'
+
+export const templates = {
+  landing: {
+    id: 'landing',
+    name: 'Landing Page',
     pages: [
       {
         id: 'home',
         name: 'Home',
-        path: '/',
         components: [
           {
-            id: 'hero-1',
-            type: 'hero',
-            label: 'Hero Section',
+            id: uuidv4(),
+            type: 'Section',
             isVisible: true,
             props: {
-              title: "Hi, I'm John Doe",
-              subtitle: 'Frontend Developer & Designer',
-              ctaText: 'View My Work',
-              alignment: 'left',
-              animation: {
-                type: 'fadeIn',
-                duration: 1,
-                delay: 0
+              backgroundColor: '#f0f0f0',
+            },
+            children: [
+              {
+                id: uuidv4(),
+                type: 'Heading',
+                isVisible: true,
+                props: {
+                  text: 'Welcome to Our Platform',
+                  color: '#333333',
+                  fontSize: '48px',
+                  fontWeight: '700',
+                }
+              },
+              {
+                id: uuidv4(),
+                type: 'Paragraph',
+                isVisible: true,
+                props: {
+                  text: 'The best solution for your needs',
+                  color: '#666666',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                }
+              },
+              {
+                id: uuidv4(),
+                type: 'CTAButton',
+                isVisible: true,
+                props: {
+                  text: 'Get Started',
+                  link: '#',
+                  backgroundColor: '#4a90e2',
+                  color: '#ffffff',
+                  borderRadius: '4px',
+                }
               }
-            }
+            ]
+          },
+          {
+            id: uuidv4(),
+            type: 'Section',
+            isVisible: true,
+            props: {
+              backgroundColor: '#ffffff',
+            },
+            children: [
+              {
+                id: uuidv4(),
+                type: 'FeatureCard',
+                isVisible: true,
+                props: {
+                  title: 'Amazing Feature',
+                  description: 'This feature will revolutionize your workflow',
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
+                  borderRadius: '8px',
+                }
+              },
+              {
+                id: uuidv4(),
+                type: 'FeatureCard',
+                isVisible: true,
+                props: {
+                  title: 'Another Great Feature',
+                  description: 'Boost your productivity with this feature',
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
+                  borderRadius: '8px',
+                }
+              }
+            ]
           }
         ]
       },
       {
-        id: 'projects',
-        name: 'Projects',
-        path: '/projects',
+        id: 'project',
+        name: 'P',
         components: [
           {
-            id: 'projects-grid',
-            type: 'features',
-            label: 'Projects Grid',
+            id: uuidv4(),
+            type: 'Section',
             isVisible: true,
             props: {
-              title: 'My Projects',
-              features: [
-                { title: 'Project 1', description: 'Description 1' },
-                { title: 'Project 2', description: 'Description 2' }
-              ],
-              columns: 2,
-              animation: {
-                type: 'staggered',
-                duration: 0.5,
-                delay: 0.2
+              backgroundColor: '#f0f0f0',
+            },
+            children: [
+              {
+                id: uuidv4(),
+                type: 'Heading',
+                isVisible: true,
+                props: {
+                  text: 'Welcome to Our Platform',
+                  color: '#333333',
+                  fontSize: '48px',
+                  fontWeight: '700',
+                }
+              },
+              {
+                id: uuidv4(),
+                type: 'Paragraph',
+                isVisible: true,
+                props: {
+                  text: 'The best solution for your needs',
+                  color: '#666666',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                }
+              },
+              {
+                id: uuidv4(),
+                type: 'CTAButton',
+                isVisible: true,
+                props: {
+                  text: 'Get Started',
+                  link: '#',
+                  backgroundColor: '#4a90e2',
+                  color: '#ffffff',
+                  borderRadius: '4px',
+                }
               }
-            }
+            ]
+          },
+          {
+            id: uuidv4(),
+            type: 'Section',
+            isVisible: true,
+            props: {
+              backgroundColor: '#ffffff',
+            },
+            children: [
+              {
+                id: uuidv4(),
+                type: 'FeatureCard',
+                isVisible: true,
+                props: {
+                  title: 'Amazing Feature',
+                  description: 'This feature will revolutionize your workflow',
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
+                  borderRadius: '8px',
+                }
+              
+              }
+            ]
           }
         ]
       }
     ]
   }
+  // Add more templates here
 }
+
